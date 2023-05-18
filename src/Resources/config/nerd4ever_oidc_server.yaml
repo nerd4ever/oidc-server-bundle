@@ -1,0 +1,6 @@
+nerd4ever_oidc_server:
+  endpoints:
+    userinfo: ~
+    revocation: ~
+  provider:
+    class: 'Nerd4ever\IDP\Repository\IdentityRepository'
