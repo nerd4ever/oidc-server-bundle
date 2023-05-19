@@ -1,6 +1,6 @@
 nerd4ever_oidc_server:
   session:
     classname: ~
-    entity_manager: ~
+    entity_manager: default
   provider:
     classname: 'Nerd4ever\IDP\Repository\IdentityRepository'

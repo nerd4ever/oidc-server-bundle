@@ -9,11 +9,12 @@
 namespace Nerd4ever\OidcServerBundle\DependencyInjection;
 
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
+use Nerd4ever\OidcServerBundle\Persistence\Mapping\Driver;
 use Nerd4ever\OidcServerBundle\Repository\IdentityProviderInterface;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -42,8 +43,14 @@ class Nerd4everOidcServerExtension extends Extension implements PrependExtension
         $config = $this->processConfiguration(new Configuration(), $configs);
 
         // Obtém o valor de classname da configuração
-        $className = $config['provider']['classname'];
-        $this->configureProvider($container, $className);
+        $providerClassName = $config['provider']['classname'];
+        $this->configureProvider($container, $providerClassName);
+
+        $sessionClassName = $config['session']['classname'];
+        $entityManager = $config['session']['entity_manager'];
+        if (!empty($entityManager)) {
+            $this->configureSession($container, $sessionClassName, $entityManager);
+        }
     }
 
     private function assertRequiredBundlesAreEnabled(ContainerBuilder $container): void
@@ -64,7 +71,7 @@ class Nerd4everOidcServerExtension extends Extension implements PrependExtension
      */
     public function process(ContainerBuilder $container)
     {
-
+        $this->assertRequiredBundlesAreEnabled($container);
     }
 
     /**
@@ -73,6 +80,23 @@ class Nerd4everOidcServerExtension extends Extension implements PrependExtension
     public function prepend(ContainerBuilder $container)
     {
         // TODO: Implement prepend() method.
+    }
+
+    private function configureSession(ContainerBuilder $container, string $className, string $entityManager)
+    {
+        // Registra o serviço do driver personalizado
+        $driver = new Definition(Driver::class, [$className]);
+        $container->setDefinition('nerd4ever_oidc_server.persistence.mapping.driver', $driver);
+
+        // Configura o driver personalizado
+        $container->setParameter('nerd4ever_oidc_server.persistence.mapping.driver.class', Driver::class);
+        $container->setParameter('nerd4ever_oidc_server.persistence.mapping.driver.arguments', [$className]);
+
+        // Configura a classe da entidade de sessão
+        $container->setParameter('nerd4ever_oidc_server.persistence.session.class', $className);
+
+        // Configura o nome do gerenciador de entidades
+        $container->setParameter('nerd4ever_oidc_server.persistence.session.entity_manager', $entityManager);
     }
 
     private function configureProvider(ContainerBuilder $container, string $className)
