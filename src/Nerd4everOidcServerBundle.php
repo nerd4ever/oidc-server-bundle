@@ -10,15 +10,15 @@ namespace Nerd4ever\OidcServerBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Nerd4ever\OidcServerBundle\DependencyInjection\OidcServerExtension;
-use Nerd4ever\OidcServerBundle\DependencyInjection\CompilerPass\OidcCompilerPass;
+use Nerd4ever\OidcServerBundle\DependencyInjection\Nerd4everOidcServerExtension;
+use Nerd4ever\OidcServerBundle\DependencyInjection\CompilerPass\Nerd4everOidcCompilerPass;
 
-final class OidcServerBundle extends Bundle
+final class Nerd4everOidcServerBundle extends Bundle
 {
     public function build(ContainerBuilder $container)
     {
         parent::build($container);
-        $container->registerExtension(new OidcServerExtension());
-        $container->addCompilerPass(new OidcCompilerPass());
+        $container->registerExtension(new Nerd4everOidcServerExtension());
+        $container->addCompilerPass(new Nerd4everOidcCompilerPass());
     }
 }

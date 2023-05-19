@@ -17,10 +17,18 @@ use Lcobucci\JWT\Encoding\ChainedFormatter;
 use Lcobucci\JWT\Token\Builder;
 use Lcobucci\JWT\Encoding\JoseEncoder;
 use Nerd4ever\OidcServerBundle\Entity\ClaimSetInterface;
+use Nerd4ever\OidcServerBundle\Event\OidServerIdTokenBuilderResolveEvent;
+use Nerd4ever\OidcServerBundle\Nerd4everOidcServerEvents;
 use Nerd4ever\OidcServerBundle\Repository\IdentityProviderInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class IdTokenResponse extends BearerTokenResponse
 {
+    /**
+     * @var EventDispatcherInterface
+     */
+    private EventDispatcherInterface $eventDispatcher;
+
     /**
      * @var IdentityProviderInterface
      */
@@ -33,11 +41,13 @@ class IdTokenResponse extends BearerTokenResponse
 
     public function __construct(
         IdentityProviderInterface $identityProvider,
-        ClaimExtractor            $claimExtractor
+        ClaimExtractor            $claimExtractor,
+        EventDispatcherInterface  $eventDispatcher
     )
     {
         $this->identityProvider = $identityProvider;
         $this->claimExtractor = $claimExtractor;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     protected function getBuilder(AccessTokenEntityInterface $accessToken, UserEntityInterface $userEntity): Builder
@@ -99,6 +109,11 @@ class IdTokenResponse extends BearerTokenResponse
         } else {
             $key = LocalFileReference::file($this->privateKey->getKeyPath(), (string)$this->privateKey->getPassPhrase());
         }
+
+        $this->eventDispatcher->dispatch(
+            new OidServerIdTokenBuilderResolveEvent($builder, $accessToken, $userEntity),
+            Nerd4everOidcServerEvents::ID_TOKEN_BUILDER_RESOLVE
+        );
 
         $token = $builder->getToken(new Sha256(), $key);
 

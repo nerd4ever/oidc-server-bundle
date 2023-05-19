@@ -9,9 +9,10 @@
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Nerd4ever\OidcServerBundle\Model\ClaimExtractor;
 use Nerd4ever\OidcServerBundle\Repository\IdentityProviderInterface;
-use Nerd4ever\OidcServerBundle\DependencyInjection\CompilerPass\OidcCompilerPass;
+use Nerd4ever\OidcServerBundle\DependencyInjection\CompilerPass\Nerd4everOidcCompilerPass;
 use Nerd4ever\OidcServerBundle\Model\IdTokenResponse;
 use Nerd4ever\OidcServerBundle\Controller\OidcController;
 
@@ -25,9 +26,10 @@ return function (ContainerConfigurator $configurator) {
         ->args([
             service(IdentityProviderInterface::class),
             service(ClaimExtractor::class),
+            service(EventDispatcherInterface::class),
         ]);
 
-    $services->set(OidcCompilerPass::class)
+    $services->set(Nerd4everOidcCompilerPass::class)
         ->tag('kernel.compiler_pass');
 
 

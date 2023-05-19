@@ -19,7 +19,7 @@ use Nerd4ever\OidcServerBundle\Model\IdTokenResponse;
  * @package Nerd4ever\IDP\DependencyInjection\Compiler
  * @author Sileno de Oliveira Brito
  */
-class OidcCompilerPass implements CompilerPassInterface
+class Nerd4everOidcCompilerPass implements CompilerPassInterface
 {
 
     /**

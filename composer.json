@@ -30,7 +30,7 @@
   "extra": {
     "symfony": {
       "config-dir": "Resources/config",
-      "bundle-class": "Nerd4ever\\OidcServerBundle\\OidcServerBundle::class"
+      "bundle-class": "Nerd4ever\\OidcServerBundle\\Nerd4everOidcServerBundle::class"
     }
   }
 }

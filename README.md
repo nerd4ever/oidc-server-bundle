@@ -1,5 +1,19 @@
 
 
+
+````
+nerd4ever_oidc_server:
+    session:
+        classname: Nerd4ever\OidcServerBundle\Entity\SessionEntity
+        entity_manager: null
+````
+
+````
+nerd4ever_oidc_server:
+    provider:
+        classname: App\CustomIdentityProvider
+````
+
 ## Agradecimentos
 
 Este projeto foi desenvolvido com base
