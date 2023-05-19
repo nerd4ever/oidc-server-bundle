@@ -12,6 +12,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Nerd4ever\OidcServerBundle\DependencyInjection\Nerd4everOidcServerExtension;
 use Nerd4ever\OidcServerBundle\DependencyInjection\CompilerPass\Nerd4everOidcCompilerPass;
+use Nerd4ever\OidcServerBundle\DependencyInjection\CompilerPass\RegisterDoctrineOrmMappingPass;
 
 final class Nerd4everOidcServerBundle extends Bundle
 {
@@ -20,5 +21,6 @@ final class Nerd4everOidcServerBundle extends Bundle
         parent::build($container);
         $container->registerExtension(new Nerd4everOidcServerExtension());
         $container->addCompilerPass(new Nerd4everOidcCompilerPass());
+        $container->addCompilerPass(new RegisterDoctrineOrmMappingPass());
     }
 }

@@ -17,7 +17,7 @@ use Lcobucci\JWT\Encoding\ChainedFormatter;
 use Lcobucci\JWT\Token\Builder;
 use Lcobucci\JWT\Encoding\JoseEncoder;
 use Nerd4ever\OidcServerBundle\Entity\ClaimSetInterface;
-use Nerd4ever\OidcServerBundle\Event\OidServerIdTokenBuilderResolveEvent;
+use Nerd4ever\OidcServerBundle\Event\OidcServerIdTokenBuilderResolveEvent;
 use Nerd4ever\OidcServerBundle\Nerd4everOidcServerEvents;
 use Nerd4ever\OidcServerBundle\Repository\IdentityProviderInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -111,7 +111,7 @@ class IdTokenResponse extends BearerTokenResponse
         }
 
         $this->eventDispatcher->dispatch(
-            new OidServerIdTokenBuilderResolveEvent($builder, $accessToken, $userEntity),
+            new OidcServerIdTokenBuilderResolveEvent($builder, $accessToken, $userEntity),
             Nerd4everOidcServerEvents::ID_TOKEN_BUILDER_RESOLVE
         );
 

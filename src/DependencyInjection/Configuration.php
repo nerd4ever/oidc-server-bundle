@@ -8,7 +8,7 @@
 
 namespace Nerd4ever\OidcServerBundle\DependencyInjection;
 
-use Nerd4ever\OidcServerBundle\Entity\SessionEntity;
+use Nerd4ever\OidcServerBundle\Entity\Session;
 use Nerd4ever\OidcServerBundle\Model\AbstractSessionEntity;
 use Nerd4ever\OidcServerBundle\Repository\IdentityProviderInterface;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
@@ -42,11 +42,11 @@ final class Configuration implements ConfigurationInterface
                 ->children()
                     ->scalarNode('classname')
                         ->info(sprintf('Set a custom session class. Must be a %s', AbstractSessionEntity::class))
-                        ->defaultValue(SessionEntity::class)
+                        ->defaultValue(Session::class)
                         ->beforeNormalization()
                             ->ifNull()
                             ->then(function ($v) {
-                                return SessionEntity::class;
+                                return Session::class;
                             })
                         ->end()
                         ->validate()

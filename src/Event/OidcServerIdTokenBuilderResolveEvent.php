@@ -13,7 +13,7 @@ use League\OAuth2\Server\Entities\UserEntityInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 use Lcobucci\JWT\Token\Builder;
 
-final class OidServerIdTokenBuilderResolveEvent extends Event
+final class OidcServerIdTokenBuilderResolveEvent extends Event
 {
     private Builder $builder;
     private AccessTokenEntityInterface $accessToken;

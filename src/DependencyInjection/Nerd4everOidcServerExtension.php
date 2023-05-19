@@ -9,17 +9,17 @@
 namespace Nerd4ever\OidcServerBundle\DependencyInjection;
 
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
-use Nerd4ever\OidcServerBundle\Persistence\Mapping\Driver;
+use Nerd4ever\OidcServerBundle\Manager\SessionManager;
 use Nerd4ever\OidcServerBundle\Repository\IdentityProviderInterface;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use InvalidArgumentException;
-use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Exception;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * My OidcServerExtension
@@ -27,7 +27,7 @@ use Exception;
  * @package Nerd4ever\OidcServerBundle\DependencyInjection
  * @author Sileno de Oliveira Brito
  */
-class Nerd4everOidcServerExtension extends Extension implements PrependExtensionInterface, CompilerPassInterface
+class Nerd4everOidcServerExtension extends Extension implements CompilerPassInterface
 {
 
     /**
@@ -47,10 +47,8 @@ class Nerd4everOidcServerExtension extends Extension implements PrependExtension
         $this->configureProvider($container, $providerClassName);
 
         $sessionClassName = $config['session']['classname'];
-        $entityManager = $config['session']['entity_manager'];
-        if (!empty($entityManager)) {
-            $this->configureSession($container, $sessionClassName, $entityManager);
-        }
+        $entityManagerName = $config['session']['entity_manager'];
+        $this->configureSession($loader, $container, $sessionClassName, $entityManagerName);
     }
 
     private function assertRequiredBundlesAreEnabled(ContainerBuilder $container): void
@@ -66,45 +64,41 @@ class Nerd4everOidcServerExtension extends Extension implements PrependExtension
         }
     }
 
-    /**
-     * You can modify the container here before it is dumped to PHP code.
-     */
+
     public function process(ContainerBuilder $container)
     {
         $this->assertRequiredBundlesAreEnabled($container);
     }
 
-    /**
-     * Allow an extension to prepend the extension configurations.
-     */
-    public function prepend(ContainerBuilder $container)
+    private function configureSession(LoaderInterface $loader, ContainerBuilder $container, string $className, ?string $entityManagerName = null)
     {
-        // TODO: Implement prepend() method.
-    }
+        $loader->load('storage/doctrine.php');
+        $entityManager = new Reference(
+            sprintf('doctrine.orm.%s_entity_manager', $entityManagerName)
+        );
 
-    private function configureSession(ContainerBuilder $container, string $className, string $entityManager)
-    {
-        // Registra o serviço do driver personalizado
-        $driver = new Definition(Driver::class, [$className]);
-        $container->setDefinition('nerd4ever_oidc_server.persistence.mapping.driver', $driver);
+        $container
+            ->findDefinition(SessionManager::class)
+            ->replaceArgument(0, $entityManager)
+            ->replaceArgument(2, $className);
 
-        // Configura o driver personalizado
-        $container->setParameter('nerd4ever_oidc_server.persistence.mapping.driver.class', Driver::class);
-        $container->setParameter('nerd4ever_oidc_server.persistence.mapping.driver.arguments', [$className]);
-
-        // Configura a classe da entidade de sessão
-        $container->setParameter('nerd4ever_oidc_server.persistence.session.class', $className);
-
-        // Configura o nome do gerenciador de entidades
-        $container->setParameter('nerd4ever_oidc_server.persistence.session.entity_manager', $entityManager);
+        $container->setParameter('nerd4ever.oidc_server.persistence.doctrine.enabled', true);
+        $container->setParameter('nerd4ever.oidc_server.persistence.doctrine.manager', $entityManagerName);
     }
 
     private function configureProvider(ContainerBuilder $container, string $className)
     {
+        $serviceId = $className;
 
-        // Define o serviço com base no classname fornecido
+        if (!$container->has($serviceId)) {
+            $container->register($serviceId, $className)->setAutowired(true);
+        }
+
+        $container->getDefinition($serviceId)->setPublic(true);
+
+        // Define o serviço IdentityProviderInterface com uma referência para o serviço $className
         $container->register(IdentityProviderInterface::class, $className)
-            ->setAutoconfigured(true)
-            ->setPublic(true);
+            ->setPublic(true)
+            ->setAutowired(true);
     }
 }

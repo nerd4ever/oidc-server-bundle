@@ -5,7 +5,7 @@ namespace Nerd4ever\OidcServerBundle\Persistence\Mapping;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\Mapping\Driver\MappingDriver;
-use Nerd4ever\OidcServerBundle\Entity\SessionEntity;
+use Nerd4ever\OidcServerBundle\Entity\Session;
 use Nerd4ever\OidcServerBundle\Model\AbstractSessionEntity;
 
 /**
@@ -16,9 +16,9 @@ use Nerd4ever\OidcServerBundle\Model\AbstractSessionEntity;
 class Driver implements MappingDriver
 {
     private string $sessionClass;
-    private string $tablePrefix;
+    private ?string $tablePrefix;
 
-    public function __construct(string $sessionClass, string $tablePrefix = 'oauth2_')
+    public function __construct(string $sessionClass, ?string $tablePrefix = 'oauth2_')
     {
         $this->sessionClass = $sessionClass;
         $this->tablePrefix = $tablePrefix;
@@ -30,7 +30,7 @@ class Driver implements MappingDriver
             case AbstractSessionEntity::class:
                 $this->buildAbstractSessionMetadata($metadata);
                 break;
-            case SessionEntity::class:
+            case Session::class:
                 $this->buildSessionEntityMetadata($metadata);
                 break;
             default:
@@ -44,7 +44,7 @@ class Driver implements MappingDriver
             [
                 AbstractSessionEntity::class,
             ],
-            SessionEntity::class === $this->sessionClass ? [SessionEntity::class] : [],
+            Session::class === $this->sessionClass ? [Session::class] : [],
         );
     }
 

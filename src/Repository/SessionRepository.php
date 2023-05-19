@@ -7,12 +7,11 @@
 
 namespace Nerd4ever\OidcServerBundle\Repository;
 
-use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use League\Bundle\OAuth2ServerBundle\Model\AccessTokenInterface;
 use League\Bundle\OAuth2ServerBundle\Model\RefreshTokenInterface;
-use Nerd4ever\OidcServerBundle\Entity\SessionEntity;
+use Nerd4ever\OidcServerBundle\Entity\Session;
 use Nerd4ever\OidcServerBundle\Exception\SessionIdentifierConstraintViolationExceptionNerd4ever;
+use Nerd4ever\OidcServerBundle\Manager\SessionManagerInterface;
 use Nerd4ever\OidcServerBundle\Model\SessionEntityInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -24,14 +23,14 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 class SessionRepository implements SessionRepositoryInterface
 {
-    private EntityManagerInterface $entityManager;
+    private SessionManagerInterface $sessionManager;
 
     /**
-     * @param EntityManagerInterface $entityManager
+     * @param SessionManagerInterface $sessionManager
      */
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(SessionManagerInterface $sessionManager)
     {
-        $this->entityManager = $entityManager;
+        $this->sessionManager = $sessionManager;
     }
 
     /**
@@ -46,7 +45,7 @@ class SessionRepository implements SessionRepositoryInterface
      */
     public function getNewSession(RefreshTokenInterface $refreshTokenEntity, UserInterface $user, string $identifier, ?string $userAgent = null, ?string $clientAddress = null): SessionEntityInterface
     {
-        return new SessionEntity(
+        return new Session(
             $refreshTokenEntity->getIdentifier(),
             $user->getUserIdentifier(),
             $identifier,
@@ -62,12 +61,12 @@ class SessionRepository implements SessionRepositoryInterface
      */
     public function persistNewSession(SessionEntityInterface $sessionEntity): void
     {
-        $session = $this->entityManager->getRepository(SessionEntity::class)->find($sessionEntity->getIdentifier());
+        $session = $this->sessionManager->find($sessionEntity->getUserIdentifier());
 
         if (null !== $session) {
             throw SessionIdentifierConstraintViolationExceptionNerd4ever::create();
         }
-        $session = new SessionEntity(
+        $session = new Session(
             $sessionEntity->getRefreshTokenIdentifier(),
             $sessionEntity->getUserIdentifier(),
             $sessionEntity->getIdentifier(),
@@ -75,8 +74,7 @@ class SessionRepository implements SessionRepositoryInterface
             $sessionEntity->getClientAddress()
         );
         $session->setAccessTokenIdentifier($sessionEntity->getAccessTokenIdentifier());
-        $this->entityManager->persist($session);
-        $this->entityManager->flush();
+        $this->sessionManager->save($session);
     }
 
     /**
@@ -87,16 +85,16 @@ class SessionRepository implements SessionRepositoryInterface
      */
     public function updateSession(string $sessionIdentifier, AccessTokenInterface $accessTokenEntity): void
     {
-        $session = $this->entityManager->getRepository(SessionEntity::class)->find($sessionIdentifier);
+        $session = $this->sessionManager->find($sessionIdentifier);
 
         if (null === $session) {
             return;
         }
         /**
-         * @var SessionEntity $session ;
+         * @var Session $session ;
          */
         $session->setAccessTokenIdentifier($accessTokenEntity->getUserIdentifier());
-        $this->entityManager->flush();
+        $this->sessionManager->update($session);
     }
 
     /**
@@ -106,16 +104,12 @@ class SessionRepository implements SessionRepositoryInterface
      */
     public function revokeSession(string $sessionIdentifier): void
     {
-        $session = $this->entityManager->getRepository(SessionEntity::class)->find($sessionIdentifier);
+        $session = $this->sessionManager->find($sessionIdentifier);
 
         if (null === $session) {
             return;
         }
-        /**
-         * @var SessionEntity $session ;
-         */
-        $session->setRevokedAt(new DateTimeImmutable());
-        $this->entityManager->flush();
+        $this->sessionManager->revoke($session);
     }
 
     /**
@@ -127,7 +121,7 @@ class SessionRepository implements SessionRepositoryInterface
      */
     public function isSessionRevoked(string $sessionIdentifier): bool
     {
-        $session = $this->entityManager->getRepository(SessionEntity::class)->find($sessionIdentifier);
+        $session = $this->sessionManager->find($sessionIdentifier);
         return $session instanceof SessionEntityInterface && $session->getRevokedAt() !== null;
     }
 }
