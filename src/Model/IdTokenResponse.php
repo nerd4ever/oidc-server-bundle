@@ -6,138 +6,31 @@
 
 namespace Nerd4ever\OidcServerBundle\Model;
 
-use Lcobucci\JWT\Signer\Key\InMemory;
-use Lcobucci\JWT\Signer\Key\LocalFileReference;
-use League\OAuth2\Server\Entities\UserEntityInterface;
 use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
-use Lcobucci\JWT\Signer\Rsa\Sha256;
-use Lcobucci\JWT\Encoding\ChainedFormatter;
-use Lcobucci\JWT\Token\Builder;
-use Lcobucci\JWT\Encoding\JoseEncoder;
-use Nerd4ever\OidcServerBundle\Entity\ClaimSetInterface;
-use Nerd4ever\OidcServerBundle\Event\OidcServerIdTokenBuilderResolveEvent;
-use Nerd4ever\OidcServerBundle\Nerd4everOidcServerEvents;
-use Nerd4ever\OidcServerBundle\Repository\IdentityProviderInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Nerd4ever\OidcServerBundle\OidcServer;
 
+/**
+ * My IdTokenResponse
+ *
+ * @package Nerd4ever\OidcServerBundle\Model
+ * @author Sileno de Oliveira Brito
+ */
 class IdTokenResponse extends BearerTokenResponse
 {
-    /**
-     * @var EventDispatcherInterface
-     */
-    private EventDispatcherInterface $eventDispatcher;
+    private OidcServer $oidcServer;
 
     /**
-     * @var IdentityProviderInterface
+     * @param OidcServer $oidcServer
      */
-    protected IdentityProviderInterface $identityProvider;
-
-    /**
-     * @var ClaimExtractor
-     */
-    protected ClaimExtractor $claimExtractor;
-
-    public function __construct(
-        IdentityProviderInterface $identityProvider,
-        ClaimExtractor            $claimExtractor,
-        EventDispatcherInterface  $eventDispatcher
-    )
+    public function __construct(OidcServer $oidcServer)
     {
-        $this->identityProvider = $identityProvider;
-        $this->claimExtractor = $claimExtractor;
-        $this->eventDispatcher = $eventDispatcher;
+        $this->oidcServer = $oidcServer;
     }
 
-    protected function getBuilder(AccessTokenEntityInterface $accessToken, UserEntityInterface $userEntity): Builder
-    {
-        $claimsFormatter = ChainedFormatter::withUnixTimestampDates();
-        $builder = new Builder(new JoseEncoder(), $claimsFormatter);
-
-        // Since version 8.0 league/oauth2-server returns \DateTimeImmutable
-        $expiresAt = $accessToken->getExpiryDateTime();
-        if ($expiresAt instanceof \DateTime) {
-            $expiresAt = \DateTimeImmutable::createFromMutable($expiresAt);
-        }
-
-        // Add required id_token claims
-        $builder
-            ->permittedFor($accessToken->getClient()->getIdentifier())
-            ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
-            ->issuedAt(new \DateTimeImmutable())
-            ->expiresAt($expiresAt)
-            ->relatedTo($userEntity->getIdentifier());
-
-        return $builder;
-    }
-
-    /**
-     * @param AccessTokenEntityInterface $accessToken
-     * @return array
-     */
     protected function getExtraParams(AccessTokenEntityInterface $accessToken): array
     {
-        if (false === $this->isOpenIDRequest($accessToken->getScopes())) {
-            return [];
-        }
-
-        /** @var UserEntityInterface $userEntity */
-        $userEntity = $this->identityProvider->getUserEntityByIdentifier($accessToken->getUserIdentifier());
-
-        if (false === is_a($userEntity, UserEntityInterface::class)) {
-            throw new \RuntimeException('UserEntity must implement UserEntityInterface');
-        } else if (false === is_a($userEntity, ClaimSetInterface::class)) {
-            throw new \RuntimeException('UserEntity must implement ClaimSetInterface');
-        }
-
-        // Add required id_token claims
-        $builder = $this->getBuilder($accessToken, $userEntity);
-
-        // Need a claim factory here to reduce the number of claims by provided scope.
-        $claims = $this->claimExtractor->extract($accessToken->getScopes(), $userEntity->getClaims());
-
-        foreach ($claims as $claimName => $claimValue) {
-            $builder = $builder->withClaim($claimName, $claimValue);
-        }
-
-        if (
-            method_exists($this->privateKey, 'getKeyContents')
-            && !empty($this->privateKey->getKeyContents())
-        ) {
-            $key = InMemory::plainText($this->privateKey->getKeyContents(), (string)$this->privateKey->getPassPhrase());
-        } else {
-            $key = LocalFileReference::file($this->privateKey->getKeyPath(), (string)$this->privateKey->getPassPhrase());
-        }
-
-        $this->eventDispatcher->dispatch(
-            new OidcServerIdTokenBuilderResolveEvent($builder, $accessToken, $userEntity),
-            Nerd4everOidcServerEvents::ID_TOKEN_BUILDER_RESOLVE
-        );
-
-        $token = $builder->getToken(new Sha256(), $key);
-
-        return [
-            'id_token' => $token->toString()
-        ];
-    }
-
-    /**
-     * @param ScopeEntityInterface[] $scopes
-     * @return bool
-     */
-    private function isOpenIDRequest(array $scopes): bool
-    {
-        // Verify scope and make sure openid exists.
-        $valid = false;
-
-        foreach ($scopes as $scope) {
-            if ($scope->getIdentifier() === 'openid') {
-                $valid = true;
-                break;
-            }
-        }
-
-        return $valid;
+        $idToken = $this->oidcServer->getNewIdToken($accessToken);
+        return null === $idToken ? [] : ['id_token' => $idToken];
     }
 }

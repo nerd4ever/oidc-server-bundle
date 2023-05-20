@@ -6,7 +6,6 @@
  */
 
 namespace Nerd4ever\OidcServerBundle\Entity;
-use Nerd4ever\OidcServerBundle\Model\AbstractSessionEntity;
 
 /**
  * My Session

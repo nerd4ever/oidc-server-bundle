@@ -8,10 +8,12 @@
 
 namespace Nerd4ever\OidcServerBundle\DependencyInjection\CompilerPass;
 
+use League\OAuth2\Server\AuthorizationServer;
+use League\OAuth2\Server\ResourceServer;
+use Nerd4ever\OidcServerBundle\Model\IdTokenResponse;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
-use Nerd4ever\OidcServerBundle\Model\IdTokenResponse;
 
 /**
  * My OidcCompilerPass
@@ -21,22 +23,39 @@ use Nerd4ever\OidcServerBundle\Model\IdTokenResponse;
  */
 class Nerd4everOidcCompilerPass implements CompilerPassInterface
 {
-
     /**
      * You can modify the container here before it is dumped to PHP code.
      */
     public function process(ContainerBuilder $container)
     {
-        $responseType = new Reference(IdTokenResponse::class);
         if (!$container->hasDefinition('league.oauth2_server.authorization_server')) {
             return;
         }
-        $definition = $container->getDefinition('league.oauth2_server.authorization_server');
-        if (count($definition->getArguments()) < 5) {
+
+        if (!$container->hasDefinition('league.oauth2_server.authorization_server')) {
             return;
         }
-        $arguments = $definition->getArguments();
-        $arguments[5] = $responseType;
-        $definition->setArguments($arguments);
+
+        $oauth2ServerDefinition = $container->getDefinition('league.oauth2_server.authorization_server');
+        $oauth2Arguments = $oauth2ServerDefinition->getArguments();
+
+        // Response Type
+        if (count($oauth2ServerDefinition->getArguments()) < 5) {
+            return;
+        }
+        $responseType = new Reference(IdTokenResponse::class);
+        $oauth2Arguments[5] = $responseType;
+        $oauth2ServerDefinition->setArguments($oauth2Arguments);
+
+        // Key
+        $encryptionKey = $container->getParameter('league.oauth2_server.encryption_key');
+        if ($container->has('league.oauth2_server.defuse_key')) {
+            $encryptionKey = new Reference('league.oauth2_server.defuse_key');
+        }
+        $oidcServer = $container->findDefinition('nerd4ever.oidc.oidc-server');
+        $oauth2PrivateKey = $oauth2Arguments[3];
+
+        $oidcServer->replaceArgument(0, $encryptionKey);
+        $oidcServer->replaceArgument(1, $oauth2PrivateKey);
     }
 }

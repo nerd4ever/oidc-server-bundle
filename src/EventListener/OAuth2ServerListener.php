@@ -7,9 +7,10 @@
 
 namespace Nerd4ever\OidcServerBundle\EventListener;
 
-use League\Bundle\OAuth2ServerBundle\Event\TokenRequestResolveEvent;
-use League\Bundle\OAuth2ServerBundle\OAuth2Events;
-use League\OAuth2\Server\RequestAccessTokenEvent;
+use League\OAuth2\Server\RequestEvent;
+use League\OAuth2\Server\RequestRefreshTokenEvent;
+use Nerd4ever\OidcServerBundle\Exception\SessionIdentifierConstraintViolationExceptionNerd4ever;
+use Nerd4ever\OidcServerBundle\OidcServer;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -20,20 +21,29 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final class OAuth2ServerListener implements EventSubscriberInterface
 {
-    public function onAccessTokenIssuedEvent(RequestAccessTokenEvent $event): void
-    {
 
+    private OidcServer $oidcServer;
+
+    /**
+     * @param OidcServer $oidcServer
+     */
+    public function __construct(OidcServer $oidcServer)
+    {
+        $this->oidcServer = $oidcServer;
     }
 
-    public function onTokenRequestResolveEvent(TokenRequestResolveEvent $event): void
+    /**
+     * @throws SessionIdentifierConstraintViolationExceptionNerd4ever
+     */
+    public function onRefreshTokenIssued(RequestRefreshTokenEvent $event): void
     {
-
+        $this->oidcServer->getNewSession($event->getRefreshToken());
     }
 
     public static function getSubscribedEvents(): array
     {
         return [
-            OAuth2Events::TOKEN_REQUEST_RESOLVE => 'onTokenRequestResolveEvent',
+            RequestEvent::REFRESH_TOKEN_ISSUED => 'onRefreshTokenIssued'
         ];
     }
 }

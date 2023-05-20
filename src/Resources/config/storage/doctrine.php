@@ -17,12 +17,11 @@ return function (ContainerConfigurator $configurator) {
         ])
         ->alias(Driver::class, 'nerd4ever.oidc_server.persistence.driver');
 
-    $services->set('nerd4ever.oidc_server.manager.doctrine.session', SessionManager::class)
+    $services->set(SessionManager::class)
         ->args([
             null,
             service(EventDispatcherInterface::class),
             null
         ])
-        ->alias(SessionManagerInterface::class, 'nerd4ever.oidc_server.manager.doctrine.session')
-        ->alias(SessionManager::class, 'nerd4ever.oidc_server.manager.doctrine.session');
+        ->alias(SessionManagerInterface::class, SessionManager::class);
 };

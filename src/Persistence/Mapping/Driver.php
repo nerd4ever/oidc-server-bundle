@@ -5,8 +5,9 @@ namespace Nerd4ever\OidcServerBundle\Persistence\Mapping;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\Mapping\Driver\MappingDriver;
+use League\Bundle\OAuth2ServerBundle\Model\RefreshToken;
+use Nerd4ever\OidcServerBundle\Entity\AbstractSessionEntity;
 use Nerd4ever\OidcServerBundle\Entity\Session;
-use Nerd4ever\OidcServerBundle\Model\AbstractSessionEntity;
 
 /**
  * @author    Sileno de Oliveira Brito
@@ -40,12 +41,13 @@ class Driver implements MappingDriver
 
     public function getAllClassNames(): array
     {
-        return array_merge(
+        $data = array_merge(
             [
                 AbstractSessionEntity::class,
             ],
             Session::class === $this->sessionClass ? [Session::class] : [],
         );
+        return $data;
     }
 
     public function isTransient(string $className): bool
@@ -57,7 +59,7 @@ class Driver implements MappingDriver
     {
         (new ClassMetadataBuilder($metadata))
             ->setTable($this->tablePrefix . 'session')
-            ->createField('identifier', 'string')->makePrimaryKey()->length(32)->build();
+            ->createField('identifier', 'string')->makePrimaryKey()->length(80)->build();
     }
 
     private function buildAbstractSessionMetadata(ClassMetadata $metadata): void
@@ -65,10 +67,13 @@ class Driver implements MappingDriver
         (new ClassMetadataBuilder($metadata))
             ->setMappedSuperClass()
             ->createField('userAgent', 'string')->length(2048)->nullable(true)->build()
-            ->createField('clientAddress', 'string')->length(64)->nullable(true)->build()
-            ->createField('userIdentifier', 'string')->length(32)->nullable(false)->build()
-            ->createField('refreshTokenIdentifier', 'string')->length(32)->nullable(false)->build()
-            ->createField('accessTokenIdentifier', 'string')->length(32)->nullable(true)->build()
-            ->createField('revokedAt', 'datetimetz')->nullable(true)->build();
+            ->createField('userAddress', 'string')->columnName('user_address')->length(64)->nullable(true)->build()
+            ->createField('revokedAt', 'datetimetz')->columnName('revoked_at')->nullable(true)->build()
+            ->createField('createdAt', 'datetimetz')->columnName('created_at')->nullable(false)->build()
+            ->createManyToOne('refreshToken', RefreshToken::class)->addJoinColumn('refresh_token', 'identifier', true, false, 'CASCADE')->build();
+
+        $metadata->addLifecycleCallback('updateCreatedAt', 'prePersist');
+        $metadata->addLifecycleCallback('updateCreatedAt', 'preUpdate');
     }
+
 }

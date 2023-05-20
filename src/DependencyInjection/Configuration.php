@@ -8,8 +8,8 @@
 
 namespace Nerd4ever\OidcServerBundle\DependencyInjection;
 
+use Nerd4ever\OidcServerBundle\Entity\AbstractSessionEntity;
 use Nerd4ever\OidcServerBundle\Entity\Session;
-use Nerd4ever\OidcServerBundle\Model\AbstractSessionEntity;
 use Nerd4ever\OidcServerBundle\Repository\IdentityProviderInterface;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;

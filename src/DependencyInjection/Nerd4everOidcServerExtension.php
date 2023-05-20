@@ -20,7 +20,6 @@ use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Exception;
 use Symfony\Component\DependencyInjection\Reference;
-
 /**
  * My OidcServerExtension
  *
@@ -64,7 +63,6 @@ class Nerd4everOidcServerExtension extends Extension implements CompilerPassInte
         }
     }
 
-
     public function process(ContainerBuilder $container)
     {
         $this->assertRequiredBundlesAreEnabled($container);
@@ -73,12 +71,10 @@ class Nerd4everOidcServerExtension extends Extension implements CompilerPassInte
     private function configureSession(LoaderInterface $loader, ContainerBuilder $container, string $className, ?string $entityManagerName = null)
     {
         $loader->load('storage/doctrine.php');
-        $entityManager = new Reference(
-            sprintf('doctrine.orm.%s_entity_manager', $entityManagerName)
-        );
+        $entityManager = new Reference('doctrine.orm.default_entity_manager');
 
         $container
-            ->findDefinition(SessionManager::class)
+            ->getDefinition(SessionManager::class)
             ->replaceArgument(0, $entityManager)
             ->replaceArgument(2, $className);
 

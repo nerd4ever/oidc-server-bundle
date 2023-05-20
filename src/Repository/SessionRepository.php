@@ -8,12 +8,11 @@
 namespace Nerd4ever\OidcServerBundle\Repository;
 
 use League\Bundle\OAuth2ServerBundle\Model\AccessTokenInterface;
-use League\Bundle\OAuth2ServerBundle\Model\RefreshTokenInterface;
+use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use Nerd4ever\OidcServerBundle\Entity\Session;
 use Nerd4ever\OidcServerBundle\Exception\SessionIdentifierConstraintViolationExceptionNerd4ever;
 use Nerd4ever\OidcServerBundle\Manager\SessionManagerInterface;
 use Nerd4ever\OidcServerBundle\Model\SessionEntityInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * My SessionRepository
@@ -36,18 +35,16 @@ class SessionRepository implements SessionRepositoryInterface
     /**
      * Create a new session
      *
-     * @param RefreshTokenInterface $refreshTokenEntity
-     * @param UserInterface $user
+     * @param RefreshTokenEntityInterface $refreshToken
      * @param string $identifier
      * @param string|null $userAgent
      * @param string|null $clientAddress
      * @return SessionEntityInterface
      */
-    public function getNewSession(RefreshTokenInterface $refreshTokenEntity, UserInterface $user, string $identifier, ?string $userAgent = null, ?string $clientAddress = null): SessionEntityInterface
+    public function getNewSession(RefreshTokenEntityInterface $refreshToken, string $identifier, ?string $userAgent = null, ?string $clientAddress = null): SessionEntityInterface
     {
         return new Session(
-            $refreshTokenEntity->getIdentifier(),
-            $user->getUserIdentifier(),
+            $refreshToken,
             $identifier,
             $userAgent,
             $clientAddress
@@ -67,11 +64,12 @@ class SessionRepository implements SessionRepositoryInterface
             throw SessionIdentifierConstraintViolationExceptionNerd4ever::create();
         }
         $session = new Session(
+            $sessionEntity->getClientIdentifier(),
             $sessionEntity->getRefreshTokenIdentifier(),
             $sessionEntity->getUserIdentifier(),
             $sessionEntity->getIdentifier(),
             $sessionEntity->getUserAgent(),
-            $sessionEntity->getClientAddress()
+            $sessionEntity->getUserAddress()
         );
         $session->setAccessTokenIdentifier($sessionEntity->getAccessTokenIdentifier());
         $this->sessionManager->save($session);
@@ -124,4 +122,16 @@ class SessionRepository implements SessionRepositoryInterface
         $session = $this->sessionManager->find($sessionIdentifier);
         return $session instanceof SessionEntityInterface && $session->getRevokedAt() !== null;
     }
+
+    public function findByAccessToken(string $accessTokenIdentifier): ?SessionEntityInterface
+    {
+        return null;
+    }
+
+    public function findByRefreshToken(string $refreshTokenIdentifier): ?SessionEntityInterface
+    {
+        return null;
+    }
+
+
 }
