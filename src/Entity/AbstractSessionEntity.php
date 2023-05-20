@@ -8,7 +8,6 @@
 namespace Nerd4ever\OidcServerBundle\Entity;
 
 use DateTimeImmutable;
-use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use Nerd4ever\OidcServerBundle\Model\SessionEntityInterface;
 
 /**
@@ -20,24 +19,25 @@ use Nerd4ever\OidcServerBundle\Model\SessionEntityInterface;
 abstract class AbstractSessionEntity implements SessionEntityInterface
 {
     protected string $identifier;
+    protected string $refreshTokenIdentifier;
     protected ?string $userAgent;
     protected ?string $userAddress;
-    protected RefreshTokenEntityInterface $refreshToken;
     protected ?DateTimeImmutable $revokedAt = null;
     protected ?DateTimeImmutable $createdAt = null;
 
     /**
-     * @param RefreshTokenEntityInterface $refreshToken
      * @param string $identifier
+     * @param string $refreshTokenIdentifier
      * @param string|null $userAgent
      * @param string|null $userAddress
      */
-    public function __construct(RefreshTokenEntityInterface $refreshToken, string $identifier, ?string $userAgent, ?string $userAddress)
+    public function __construct(string $identifier, string $refreshTokenIdentifier, ?string $userAgent, ?string $userAddress)
     {
-        $this->refreshToken = $refreshToken;
         $this->identifier = $identifier;
+        $this->refreshTokenIdentifier = $refreshTokenIdentifier;
         $this->userAgent = $userAgent;
         $this->userAddress = $userAddress;
+        $this->createdAt = new DateTimeImmutable();
     }
 
     /**
@@ -65,11 +65,11 @@ abstract class AbstractSessionEntity implements SessionEntityInterface
     }
 
     /**
-     * @return RefreshTokenEntityInterface
+     * @return string
      */
-    public function getRefreshToken(): RefreshTokenEntityInterface
+    public function getRefreshTokenIdentifier(): string
     {
-        return $this->refreshToken;
+        return $this->refreshTokenIdentifier;
     }
 
 
@@ -96,22 +96,5 @@ abstract class AbstractSessionEntity implements SessionEntityInterface
     public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
-    }
-
-    /**
-     * @param DateTimeImmutable|null $createdAt
-     * @return AbstractSessionEntity
-     */
-    public function setCreatedAt(?DateTimeImmutable $createdAt): AbstractSessionEntity
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    public function updateCreatedAt(AbstractSessionEntity $entity): void
-    {
-        if (!$entity->getCreatedAt()) {
-            $entity->setCreatedAt(new DateTimeImmutable());
-        }
     }
 }

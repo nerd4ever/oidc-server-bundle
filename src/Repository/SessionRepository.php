@@ -7,7 +7,6 @@
 
 namespace Nerd4ever\OidcServerBundle\Repository;
 
-use League\Bundle\OAuth2ServerBundle\Model\AccessTokenInterface;
 use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use Nerd4ever\OidcServerBundle\Entity\Session;
 use Nerd4ever\OidcServerBundle\Exception\SessionIdentifierConstraintViolationExceptionNerd4ever;
@@ -44,8 +43,8 @@ class SessionRepository implements SessionRepositoryInterface
     public function getNewSession(RefreshTokenEntityInterface $refreshToken, string $identifier, ?string $userAgent = null, ?string $clientAddress = null): SessionEntityInterface
     {
         return new Session(
-            $refreshToken,
             $identifier,
+            $refreshToken->getIdentifier(),
             $userAgent,
             $clientAddress
         );
@@ -58,42 +57,22 @@ class SessionRepository implements SessionRepositoryInterface
      */
     public function persistNewSession(SessionEntityInterface $sessionEntity): void
     {
-        $session = $this->sessionManager->find($sessionEntity->getUserIdentifier());
+        $session = $this->sessionManager->find($sessionEntity->getIdentifier());
 
         if (null !== $session) {
             throw SessionIdentifierConstraintViolationExceptionNerd4ever::create();
         }
+
         $session = new Session(
-            $sessionEntity->getClientIdentifier(),
-            $sessionEntity->getRefreshTokenIdentifier(),
-            $sessionEntity->getUserIdentifier(),
             $sessionEntity->getIdentifier(),
+            $sessionEntity->getRefreshTokenIdentifier(),
             $sessionEntity->getUserAgent(),
             $sessionEntity->getUserAddress()
         );
-        $session->setAccessTokenIdentifier($sessionEntity->getAccessTokenIdentifier());
+
         $this->sessionManager->save($session);
     }
 
-    /**
-     * Update a session
-     *
-     * @param string $sessionIdentifier
-     * @param AccessTokenInterface $accessTokenEntity
-     */
-    public function updateSession(string $sessionIdentifier, AccessTokenInterface $accessTokenEntity): void
-    {
-        $session = $this->sessionManager->find($sessionIdentifier);
-
-        if (null === $session) {
-            return;
-        }
-        /**
-         * @var Session $session ;
-         */
-        $session->setAccessTokenIdentifier($accessTokenEntity->getUserIdentifier());
-        $this->sessionManager->update($session);
-    }
 
     /**
      * Revoke a session.
@@ -125,13 +104,6 @@ class SessionRepository implements SessionRepositoryInterface
 
     public function findByAccessToken(string $accessTokenIdentifier): ?SessionEntityInterface
     {
-        return null;
+        return $this->sessionManager->findByAccessToken($accessTokenIdentifier);
     }
-
-    public function findByRefreshToken(string $refreshTokenIdentifier): ?SessionEntityInterface
-    {
-        return null;
-    }
-
-
 }

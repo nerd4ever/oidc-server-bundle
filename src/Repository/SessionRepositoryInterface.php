@@ -35,14 +35,6 @@ interface SessionRepositoryInterface
     public function persistNewSession(SessionEntityInterface $sessionEntity): void;
 
     /**
-     * Update a session
-     *
-     * @param string $sessionIdentifier
-     * @param AccessTokenInterface $accessTokenEntity
-     */
-    public function updateSession(string $sessionIdentifier, AccessTokenInterface $accessTokenEntity): void;
-
-    /**
      * Revoke a session.
      *
      * @param string $sessionIdentifier
@@ -60,5 +52,4 @@ interface SessionRepositoryInterface
 
     public function findByAccessToken(string $accessTokenIdentifier): ?SessionEntityInterface;
 
-    public function findByRefreshToken(string $refreshTokenIdentifier): ?SessionEntityInterface;
 }

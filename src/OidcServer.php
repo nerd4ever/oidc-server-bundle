@@ -145,7 +145,7 @@ final class OidcServer implements OidcServerInterface
             $builder = $builder->withClaim($claimName, $claimValue);
         }
 
-        $session = $this->sessionRepository->findByAccessToken($accessToken->getUserIdentifier());
+        $session = $this->sessionRepository->findByAccessToken($accessToken->getIdentifier());
 
         if (null !== $session) {
             $builder = $builder->withClaim('sid', $session->getIdentifier());

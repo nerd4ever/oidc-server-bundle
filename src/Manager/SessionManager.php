@@ -3,11 +3,12 @@
 namespace Nerd4ever\OidcServerBundle\Manager;
 
 use Doctrine\ORM\EntityManagerInterface;
+use League\Bundle\OAuth2ServerBundle\Model\RefreshToken;
 use Nerd4ever\OidcServerBundle\Event\OidcServerBeforeSaveSessionEvent;
 use Nerd4ever\OidcServerBundle\Nerd4everOidcServerEvents;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Nerd4ever\OidcServerBundle\Model\SessionEntityInterface;
-use DateTimeImmutable;
+use Exception;
 
 /**
  * @author    Sileno de Oliveira Brito
@@ -54,8 +55,24 @@ final class SessionManager implements SessionManagerInterface
 
     public function revoke(SessionEntityInterface $session): void
     {
-        $session->setRevokedAt(new DateTimeImmutable());
+        $session->revoke();
         $this->dispatcher->dispatch(new OidcServerBeforeSaveSessionEvent($session), Nerd4everOidcServerEvents::BEFORE_REVOKE_SESSION);
         $this->entityManager->flush();
     }
+
+    public function findByAccessToken(string $accessTokenIdentifier): ?SessionEntityInterface
+    {
+        $repository = $this->entityManager->getRepository($this->sessionClass);
+        try {
+            return $repository->createQueryBuilder('s')
+                ->innerJoin(RefreshToken::class, 'r', 'WITH', 's.refreshTokenIdentifier = r.identifier')
+                ->where('r.accessToken = :accessTokenIdentifier')
+                ->setParameter('accessTokenIdentifier', $accessTokenIdentifier)
+                ->getQuery()
+                ->getOneOrNullResult();
+        } catch (Exception $ex) {
+            return null;
+        }
+    }
+
 }

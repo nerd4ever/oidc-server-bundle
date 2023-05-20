@@ -5,7 +5,7 @@ namespace Nerd4ever\OidcServerBundle\Persistence\Mapping;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\Mapping\Driver\MappingDriver;
-use League\Bundle\OAuth2ServerBundle\Model\RefreshToken;
+use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use Nerd4ever\OidcServerBundle\Entity\AbstractSessionEntity;
 use Nerd4ever\OidcServerBundle\Entity\Session;
 
@@ -41,13 +41,12 @@ class Driver implements MappingDriver
 
     public function getAllClassNames(): array
     {
-        $data = array_merge(
+        return array_merge(
             [
                 AbstractSessionEntity::class,
             ],
             Session::class === $this->sessionClass ? [Session::class] : [],
         );
-        return $data;
     }
 
     public function isTransient(string $className): bool
@@ -70,10 +69,7 @@ class Driver implements MappingDriver
             ->createField('userAddress', 'string')->columnName('user_address')->length(64)->nullable(true)->build()
             ->createField('revokedAt', 'datetimetz')->columnName('revoked_at')->nullable(true)->build()
             ->createField('createdAt', 'datetimetz')->columnName('created_at')->nullable(false)->build()
-            ->createManyToOne('refreshToken', RefreshToken::class)->addJoinColumn('refresh_token', 'identifier', true, false, 'CASCADE')->build();
-
-        $metadata->addLifecycleCallback('updateCreatedAt', 'prePersist');
-        $metadata->addLifecycleCallback('updateCreatedAt', 'preUpdate');
+            ->createField('refreshTokenIdentifier', 'string')->columnName('refresh_token_identifier')->length(80)->nullable(false)->unique(true)->build();
     }
 
 }

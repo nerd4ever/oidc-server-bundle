@@ -8,7 +8,6 @@
 namespace Nerd4ever\OidcServerBundle\Model;
 
 use DateTimeImmutable;
-use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 
 interface SessionEntityInterface
 {
@@ -18,7 +17,7 @@ interface SessionEntityInterface
 
     public function getUserAddress(): ?string;
 
-    public function getRefreshToken(): RefreshTokenEntityInterface;
+    public function getRefreshTokenIdentifier(): string;
 
     public function getCreatedAt(): ?DateTimeImmutable;
 

@@ -19,4 +19,6 @@ interface SessionManagerInterface
 
     public function find(string $identifier): ?SessionEntityInterface;
 
+    public function findByAccessToken(string $accessTokenIdentifier): ?SessionEntityInterface;
+
 }
