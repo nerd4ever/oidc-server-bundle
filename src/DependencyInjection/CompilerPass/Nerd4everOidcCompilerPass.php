@@ -10,10 +10,13 @@ namespace Nerd4ever\OidcServerBundle\DependencyInjection\CompilerPass;
 
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\ResourceServer;
+use Nerd4ever\OidcServerBundle\Grant\OidcImplicitGrant;
 use Nerd4ever\OidcServerBundle\Model\IdTokenResponse;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use DateInterval;
 
 /**
  * My OidcCompilerPass
@@ -57,5 +60,12 @@ class Nerd4everOidcCompilerPass implements CompilerPassInterface
 
         $oidcServer->replaceArgument(0, $encryptionKey);
         $oidcServer->replaceArgument(1, $oauth2PrivateKey);
+
+        // Grant
+        $oauth2ServerDefinition->addMethodCall('enableGrantType', [
+            new Reference(OidcImplicitGrant::class),
+            new Definition(DateInterval::class, ['PT1H']),
+        ]);
+
     }
 }

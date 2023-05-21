@@ -20,6 +20,7 @@ use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Exception;
 use Symfony\Component\DependencyInjection\Reference;
+
 /**
  * My OidcServerExtension
  *

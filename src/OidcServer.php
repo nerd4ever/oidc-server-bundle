@@ -22,6 +22,7 @@ use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Entities\UserEntityInterface;
+use League\OAuth2\Server\Exception\OAuthServerException;
 use Nerd4ever\OidcServerBundle\Entity\ClaimSetInterface;
 use Nerd4ever\OidcServerBundle\Event\OidcServerIdTokenBuilderResolveEvent;
 use Nerd4ever\OidcServerBundle\Exception\SessionIdentifierConstraintViolationExceptionNerd4ever;
@@ -150,6 +151,15 @@ final class OidcServer implements OidcServerInterface
         if (null !== $session) {
             $builder = $builder->withClaim('sid', $session->getIdentifier());
         }
+        $nonceParameter = $_GET['nonce'] ?? null;
+        if ($nonceParameter !== null && !\is_string($nonceParameter)) {
+            throw new \RuntimeException('invalid nonce parameter');
+        }
+
+        if (null !== $nonceParameter) {
+            $builder = $builder->withClaim('nonce', $nonceParameter);
+        }
+
         if (
             method_exists($this->privateKey, 'getKeyContents')
             && !empty($this->privateKey->getKeyContents())
