@@ -26,6 +26,8 @@ use Nerd4ever\OidcServerBundle\Manager\SessionManagerInterface;
 use Nerd4ever\OidcServerBundle\OidcServer;
 use Nerd4ever\OidcServerBundle\Model\IdTokenResponse;
 use Nerd4ever\OidcServerBundle\OidcServerInterface;
+use Nerd4ever\OidcServerBundle\Grant\OidcImplicitGrant;
+use Symfony\Component\DependencyInjection\Definition;
 
 return function (ContainerConfigurator $configurator) {
     $services = $configurator->services();
@@ -58,6 +60,13 @@ return function (ContainerConfigurator $configurator) {
 
     $services->set(IdTokenResponse::class)
         ->args([service('nerd4ever.oidc.oidc-server')]);
+
+    $services->set(OidcImplicitGrant::class)
+        ->args([
+            service('nerd4ever.oidc.oidc-server'),
+            new Definition(\DateInterval::class, ['PT1H'])
+        ])
+        ->autoconfigure(true);
 
     $services->set(Nerd4everOidcCompilerPass::class)
         ->tag('kernel.compiler_pass');
