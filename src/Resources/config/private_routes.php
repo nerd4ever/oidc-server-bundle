@@ -11,9 +11,7 @@ declare(strict_types=1);
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 return function (RoutingConfigurator $routes) {
-    $routes->add('oidc_jwks_uri', '/jwks_uri')
-        ->controller('Nerd4ever\OidcServerBundle\Controller\OidcController::jwksUriAction')
-        ->methods(['GET']);
+
 
     $routes->add('oidc_user', '/user')
         ->controller('Nerd4ever\OidcServerBundle\Controller\OidcController::userAction')
