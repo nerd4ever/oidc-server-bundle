@@ -71,8 +71,12 @@ return function (ContainerConfigurator $configurator) {
     $services->set(Nerd4everOidcCompilerPass::class)
         ->tag('kernel.compiler_pass');
 
-    $services->set('nerd4ever.oidc.controller.oidc', OidcController::class)
-        ->autoconfigure(true);
+
+    // Controller
+    $services
+        ->set(OidcController::class)
+        ->autowire(true)
+        ->public();
 
     $services->set('nerd4ever.oidc.listener.oauth2-server', OAuth2ServerListener::class)
         ->args([service('nerd4ever.oidc.oidc-server')])

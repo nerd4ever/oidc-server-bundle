@@ -9,3 +9,4 @@ vendor/
 # PHPUnit
 phpunit.xml
 .phpunit.result.cache
+.idea

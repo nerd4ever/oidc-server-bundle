@@ -49,6 +49,8 @@ class Nerd4everOidcServerExtension extends Extension implements CompilerPassInte
         $sessionClassName = $config['session']['classname'];
         $entityManagerName = $config['session']['entity_manager'];
         $this->configureSession($loader, $container, $sessionClassName, $entityManagerName);
+
+        $this->configureDiscovery($container, $config);
     }
 
     private function assertRequiredBundlesAreEnabled(ContainerBuilder $container): void
@@ -67,6 +69,14 @@ class Nerd4everOidcServerExtension extends Extension implements CompilerPassInte
     public function process(ContainerBuilder $container)
     {
         $this->assertRequiredBundlesAreEnabled($container);
+    }
+
+    private function configureDiscovery(ContainerBuilder $container, array $config,)
+    {
+        $container->setParameter('nerd4ever.oidc_server.discovery.userinfo', $config['discovery']['userinfo']);
+        $container->setParameter('nerd4ever.oidc_server.discovery.authorization', $config['discovery']['authorization']);
+        $extras = isset($config['scopes']) && isset($config['scopes']['extras']) ? $config['scopes']['extras'] : [];
+        $container->setParameter('nerd4ever.oidc_server.scope.extras', $extras);
     }
 
     private function configureSession(LoaderInterface $loader, ContainerBuilder $container, string $className, ?string $entityManagerName = null)

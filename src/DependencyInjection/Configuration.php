@@ -29,6 +29,8 @@ final class Configuration implements ConfigurationInterface
         $rootNode = $treeBuilder->getRootNode();
 
         $rootNode->append($this->createSessionNode());
+        $rootNode->append($this->createDiscoveryEndpoint());
+        $rootNode->append($this->createScopes());
         $rootNode->append($this->createIdentityRepositoryNode());
         return $treeBuilder;
     }
@@ -39,26 +41,68 @@ final class Configuration implements ConfigurationInterface
         $node = $treeBuilder->getRootNode();
         $node
             ->addDefaultsIfNotSet()
-                ->children()
-                    ->scalarNode('classname')
-                        ->info(sprintf('Set a custom session class. Must be a %s', AbstractSessionEntity::class))
-                        ->defaultValue(Session::class)
-                        ->beforeNormalization()
-                            ->ifNull()
-                            ->then(function ($v) {
-                                return Session::class;
-                            })
-                        ->end()
-                        ->validate()
-                        ->ifTrue(function ($v) {
-                            return !is_a($v, AbstractSessionEntity::class, true);
-                        })
-                        ->thenInvalid(sprintf('%%s must be a %s', AbstractSessionEntity::class))
-                        ->end()
-                    ->end()
-                ->scalarNode('entity_manager')
-                    ->info('The name of the entity manager to be used for the session')
-                    ->defaultValue(null)
+            ->children()
+            ->scalarNode('classname')
+            ->info(sprintf('Set a custom session class. Must be a %s', AbstractSessionEntity::class))
+            ->defaultValue(Session::class)
+            ->beforeNormalization()
+            ->ifNull()
+            ->then(function ($v) {
+                return Session::class;
+            })
+            ->end()
+            ->validate()
+            ->ifTrue(function ($v) {
+                return !is_a($v, AbstractSessionEntity::class, true);
+            })
+            ->thenInvalid(sprintf('%%s must be a %s', AbstractSessionEntity::class))
+            ->end()
+            ->end()
+            ->scalarNode('entity_manager')
+            ->info('The name of the entity manager to be used for the session')
+            ->defaultValue(null)
+            ->end()
+            ->end();
+        return $node;
+    }
+
+    private function createScopes(): NodeDefinition
+    {
+        $treeBuilder = new TreeBuilder('scopes');
+        $node = $treeBuilder->getRootNode();
+        $node
+            ->addDefaultsIfNotSet()
+            ->children()
+                ->arrayNode('extras')
+                ->isRequired()
+                ->requiresAtLeastOneElement()
+                ->prototype('scalar')->end()
+                ->end()
+            ->end();
+
+        return $node;
+    }
+
+    private function createDiscoveryEndpoint(): NodeDefinition
+    {
+        $treeBuilder = new TreeBuilder('discovery');
+        $node = $treeBuilder->getRootNode();
+        $node
+            ->addDefaultsIfNotSet()
+            ->children()
+                ->scalarNode('authorization')
+                    ->info('The authorization endpoint for discovery')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                ->end()
+                ->scalarNode('userinfo')
+                    ->info('The userinfo endpoint for discovery')
+                    ->defaultNull()
+                    ->beforeNormalization()
+                    ->ifNull()
+                    ->then(function ($v) {
+                        return 'oidc_user';
+                    })
                 ->end()
             ->end();
         return $node;
@@ -72,14 +116,14 @@ final class Configuration implements ConfigurationInterface
             ->info(sprintf('Set a custom session class. Must be a %s', IdentityProviderInterface::class))
             ->isRequired()
             ->children()
-                    ->scalarNode('classname')
-                    ->validate()
-                    ->ifTrue(function ($v) {
-                        return !is_a($v, IdentityProviderInterface::class, true);
-                    })
-                    ->thenInvalid(sprintf('%%s must be a %s', IdentityProviderInterface::class))
-                    ->end()
-                ->end()
+            ->scalarNode('classname')
+            ->validate()
+            ->ifTrue(function ($v) {
+                return !is_a($v, IdentityProviderInterface::class, true);
+            })
+            ->thenInvalid(sprintf('%%s must be a %s', IdentityProviderInterface::class))
+            ->end()
+            ->end()
             ->end();
         return $node;
     }

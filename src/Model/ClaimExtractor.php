@@ -13,16 +13,17 @@ use Nerd4ever\OidcServerBundle\Exception\InvalidArgumentException;
 
 class ClaimExtractor
 {
-    protected $claimSets;
+    protected array $claimSets = [];
 
-    protected $protectedClaims = ['profile', 'email', 'address', 'phone'];
+    protected array $protectedClaims = ['profile', 'email', 'address', 'phone'];
 
     /**
      * ClaimExtractor constructor.
      *
      * @param ClaimSetEntity[] $claimSets
+     * @throws InvalidArgumentException
      */
-    public function __construct($claimSets = [])
+    public function __construct(array $claimSets = [])
     {
         // Add Default OpenID Connect Claims
         // @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
@@ -72,7 +73,7 @@ class ClaimExtractor
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function addClaimSet(ClaimSetEntityInterface $claimSet)
+    public function addClaimSet(ClaimSetEntityInterface $claimSet): static
     {
         $scope = $claimSet->getScope();
 
@@ -91,7 +92,7 @@ class ClaimExtractor
      * @param string $scope
      * @return ClaimSetEntity|null
      */
-    public function getClaimSet($scope)
+    public function getClaimSet(string $scope): ?ClaimSetEntity
     {
         if (!$this->hasClaimSet($scope)) {
             return null;
@@ -104,9 +105,27 @@ class ClaimExtractor
      * @param string $scope
      * @return bool
      */
-    public function hasClaimSet($scope)
+    public function hasClaimSet(string $scope): bool
     {
         return array_key_exists($scope, $this->claimSets);
+    }
+
+
+    public function extractAllScopes(): array
+    {
+        return array_keys($this->claimSets);
+    }
+
+    public function extractAllClaimSet(): array
+    {
+        $out = [];
+        foreach ($this->claimSets as $c) {
+            /**
+             * @var ClaimSetEntity $c
+             */
+            $out = array_merge($c->getClaims(), $out);
+        }
+        return array_unique($out);
     }
 
     /**
@@ -116,7 +135,7 @@ class ClaimExtractor
      * @param array $claims
      * @return array
      */
-    public function extract(array $scopes, array $claims)
+    public function extract(array $scopes, array $claims): array
     {
         $claimData = [];
         $keys = array_keys($claims);

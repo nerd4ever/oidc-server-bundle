@@ -8,6 +8,8 @@
 namespace Nerd4ever\OidcServerBundle;
 
 use Defuse\Crypto\Key;
+use Jose\Component\Core\JWKSet;
+use Jose\Component\KeyManagement\JWKFactory;
 use Lcobucci\JWT\Encoding\ChainedFormatter;
 use Lcobucci\JWT\Encoding\JoseEncoder;
 use Lcobucci\JWT\Signer\Key\InMemory;
@@ -22,7 +24,6 @@ use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Entities\UserEntityInterface;
-use League\OAuth2\Server\Exception\OAuthServerException;
 use Nerd4ever\OidcServerBundle\Entity\ClaimSetInterface;
 use Nerd4ever\OidcServerBundle\Event\OidcServerIdTokenBuilderResolveEvent;
 use Nerd4ever\OidcServerBundle\Exception\SessionIdentifierConstraintViolationExceptionNerd4ever;
@@ -217,6 +218,27 @@ final class OidcServer implements OidcServerInterface
             $variant,
             substr($hash, 16, 12),
         ]);
+    }
+
+    public function getJWKSet(): JWKSet
+    {
+        $privateKeyString = $this->privateKey->getKeyContents();
+        // Carregar a chave privada
+        $privateKey = openssl_pkey_get_private($privateKeyString);
+        // Obter os detalhes da chave
+        $keyDetails = openssl_pkey_get_details($privateKey);
+        // Obter a chave pública como uma string
+        $publicKeyString = $keyDetails['key'];
+        $jwk = JWKFactory::createFromKey($publicKeyString,
+            null,
+            [
+                'kid' => $this->getKeyId(),
+                'use' => 'sig',
+                'alg' => 'RS256'
+            ]
+        );
+        return new JWKSet([$jwk]);
+
     }
 
 }
