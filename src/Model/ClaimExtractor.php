@@ -21,51 +21,10 @@ class ClaimExtractor
      * ClaimExtractor constructor.
      *
      * @param ClaimSetEntity[] $claimSets
-     * @throws InvalidArgumentException
      */
     public function __construct(array $claimSets = [])
     {
-        // Add Default OpenID Connect Claims
-        // @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
-        $this->addClaimSet(
-            new ClaimSetEntity('profile', [
-                'name',
-                'family_name',
-                'given_name',
-                'middle_name',
-                'nickname',
-                'preferred_username',
-                'profile',
-                'picture',
-                'website',
-                'gender',
-                'birthdate',
-                'zoneinfo',
-                'locale',
-                'updated_at'
-            ])
-        );
-        $this->addClaimSet(
-            new ClaimSetEntity('email', [
-                'email',
-                'email_verified'
-            ])
-        );
-        $this->addClaimSet(
-            new ClaimSetEntity('address', [
-                'address'
-            ])
-        );
-        $this->addClaimSet(
-            new ClaimSetEntity('phone', [
-                'phone_number',
-                'phone_number_verified'
-            ])
-        );
 
-        foreach ($claimSets as $claimSet) {
-            $this->addClaimSet($claimSet);
-        }
     }
 
     /**
